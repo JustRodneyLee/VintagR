@@ -29,7 +29,8 @@ namespace VintagR
         private void VintagR_Load(object sender, EventArgs e)
         {
             ImagePreviews = new Dictionary<string, Image>();
-            Images = new Dictionary<string, Mat>();            
+            Images = new Dictionary<string, Mat>();
+            //MakeImageVintage("lol", Cv2.ImRead("E:/Desktop/1.png"));
         }
 
         private void VintageButton_Click(object sender, EventArgs e)
@@ -66,39 +67,46 @@ namespace VintagR
             byte[] imgData = new byte[dataSize];
             byte[] vintageImgData = new byte[dataSize];            
             Mat vintageImg = new Mat();
-            img.ConvertTo(vintageImg, -1, 1.3, -30); //Contrast and Brightness adjustments
+            img.ConvertTo(vintageImg, -1, 1.25, -35); //Contrast and Brightness adjustments
             var mat3 = new Mat<Vec3b>(vintageImg);
             var indexer = mat3.GetIndexer();
             //Cv2.CvtColor(vintageImg, vintageImg, ColorConversionCodes.RGB2HSV); //Convert to HSV
             Mat hsvImg = new Mat();
-            Cv2.CvtColor(vintageImg, hsvImg, ColorConversionCodes.BGR2HSV_FULL);
+            Cv2.CvtColor(vintageImg, hsvImg, ColorConversionCodes.BGR2HSV);
             ProgressBar.Value++;
             Mat[] hsv = Cv2.Split(hsvImg);
             hsv[0] -= 5; //Hue change
-            hsv[1] += 15; //Saturation increase
-            hsv[2] += 30; //Lightness increase
+            hsv[1] += 20; //Saturation increase
+            hsv[2] -= 10; //Lightness increase
             Cv2.Merge(hsv, hsvImg);
-            Cv2.CvtColor(hsvImg, vintageImg, ColorConversionCodes.HSV2BGR_FULL);
+            Cv2.CvtColor(hsvImg, vintageImg, ColorConversionCodes.HSV2BGR);
             ProgressBar.Value++;
-            magentaOverlay = new Mat(img.Rows, img.Cols, img.Type(), new Scalar(144, 0, 255)); //BGR
+            magentaOverlay = new Mat(img.Rows, img.Cols, img.Type(), new Scalar(144, 0, 255)); //BGR            
+            double temp;
             for (int y = 0; y < vintageImg.Height; y++)
                 for (int x = 0; x < vintageImg.Width; x++)
                 {
-                    Vec3b pix = vintageImg.At<Vec3b>(y, x);//BGR
-                    pix.Item0 = (byte)(pix.Item0 * 0.7 + 32);
-                    pix.Item1 = (byte)(-0.0004 * Math.Pow(pix.Item1,2) + 1.1 * pix.Item1 + 0.2);
-                    if (pix.Item2 >= 200)
-                        pix.Item2 = 255;
-                    /*if (pix.Item2 >= (byte)200)
-                        pix.Item2 = (byte)255;
-                    else
-                        pix.Item2 = (byte)(0.0018 * Math.Pow(pix.Item2,2) + 0.9 * x);*/
+                    Vec3b pix = vintageImg.At<Vec3b>(y, x);//BGR                    
+
+                    temp = pix.Item0 * 0.7 + 32;
+                    if (temp >= 255) temp = 255;
+                    pix.Item0 = (byte)temp;                    
+
+                    temp = 0.00001 * Math.Pow(pix.Item1, 3) - 0.006 * Math.Pow(pix.Item1, 2) + 1.9 * pix.Item1;
+                    if (temp >= 255) temp = 255;
+                    pix.Item1 = (byte)temp;
+                    
+                    temp = 1.125 * pix.Item2;
+                    if (temp >= 255) temp = 255;
+                    pix.Item2 = (byte)temp;
+
                     vintageImg.At<Vec3b>(y, x) = pix;
                 }
-            Cv2.AddWeighted(magentaOverlay, 0.15, vintageImg, 0.85, 0, vintageImg);
-            ProgressBar.Value++;
-            //Cv2.ImShow("Preview", vintageImg);
-            Cv2.ImWrite(folderBrowserDialog.SelectedPath + "/" + name, vintageImg);
+            Cv2.AddWeighted(magentaOverlay, 0.12, vintageImg, 0.9, 0, vintageImg);
+            vintageImg.ConvertTo(vintageImg, -1, 1.1, -10);
+            ProgressBar.Value++;            
+            Cv2.ImShow("Preview", vintageImg);
+            //Cv2.ImWrite(folderBrowserDialog.SelectedPath + "/" + name, vintageImg);
         }
 
         private void LoadImageButton_Click(object sender, EventArgs e)
@@ -109,7 +117,7 @@ namespace VintagR
         void AddImage(string path)
         {
             string fileName = Path.GetFileName(path);
-            Mat mat = Cv2.ImRead(path);
+            Mat mat = Cv2.ImRead(path, ImreadModes.Color);
             Images.Add(fileName, mat);
             ImagePreviews.Add(fileName, Image.FromFile(path));                        
             listViewImages.Items.Add(fileName);
