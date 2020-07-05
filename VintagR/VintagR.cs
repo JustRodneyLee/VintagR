@@ -105,8 +105,8 @@ namespace VintagR
             Cv2.AddWeighted(magentaOverlay, 0.12, vintageImg, 0.9, 0, vintageImg);
             vintageImg.ConvertTo(vintageImg, -1, 1.1, -10);
             ProgressBar.Value++;            
-            Cv2.ImShow("Preview", vintageImg);
-            //Cv2.ImWrite(folderBrowserDialog.SelectedPath + "/" + name, vintageImg);
+            //Cv2.ImShow("Preview", vintageImg);
+            Cv2.ImWrite(folderBrowserDialog.SelectedPath + "/" + name, vintageImg);
         }
 
         private void LoadImageButton_Click(object sender, EventArgs e)
